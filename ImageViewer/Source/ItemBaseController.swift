@@ -59,6 +59,7 @@ open class ItemBaseController<T: UIView>: UIViewController, ItemController, UIGe
     // TRANSITIONS
     fileprivate var swipeToDismissTransition: GallerySwipeToDismissTransition?
 
+    fileprivate var lastOffset: CGFloat = 0
 
     // MARK: - Initializers
 
@@ -265,29 +266,17 @@ open class ItemBaseController<T: UIView>: UIViewController, ItemController, UIGe
     }
     
     public func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        let offset = scrollView.contentOffset
-        if (scrollView.panGestureRecognizer.state == .began || scrollView.panGestureRecognizer.state == .changed || scrollView.panGestureRecognizer.state == .ended) && offset.y < 0 {
-            let currentVelocity = scrollView.panGestureRecognizer.velocity(in: self.view)
-            let currentTouchPoint = scrollView.panGestureRecognizer.translation(in: view)
-            
-            if swipingToDismiss == nil { swipingToDismiss = (fabs(currentVelocity.x) > fabs(currentVelocity.y)) ? .horizontal : .vertical }
-            guard let swipingToDismissInProgress = swipingToDismiss else { return }
-            
-            switch scrollView.panGestureRecognizer.state {
-                
-            case .began:
-                swipeToDismissTransition = GallerySwipeToDismissTransition(scrollView: self.scrollView)
-                
-            case .changed:
-                self.handleSwipeToDismissInProgress(swipingToDismissInProgress, forTouchPoint: currentTouchPoint)
-                
-            case .ended:
-                self.handleSwipeToDismissEnded(swipingToDismissInProgress, finalVelocity: currentVelocity, finalTouchPoint: currentTouchPoint)
-                
-            default:
-                break
-            }
+        
+        let currentVelocity = scrollView.panGestureRecognizer.velocity(in: self.view)
+        
+        let newOffset = scrollView.contentOffset.y
+        let dy = newOffset - lastOffset
+        
+        if dy < 0 && newOffset < 0 && currentVelocity.y > thresholdVelocity {
+            self.dismiss(animated: true, completion: nil)
         }
+        
+        lastOffset = newOffset
     }
     
     @objc func scrollViewDidSingleTap() {
