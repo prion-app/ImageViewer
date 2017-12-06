@@ -260,10 +260,36 @@ open class ItemBaseController<T: UIView>: UIViewController, ItemController, UIGe
     // MARK: - Scroll View delegate methods
 
     public func scrollViewDidZoom(_ scrollView: UIScrollView) {
-
+        
         itemView.center = contentCenter(forBoundingSize: scrollView.bounds.size, contentSize: scrollView.contentSize)
     }
-
+    
+    public func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let offset = scrollView.contentOffset
+        if (scrollView.panGestureRecognizer.state == .began || scrollView.panGestureRecognizer.state == .changed || scrollView.panGestureRecognizer.state == .ended) && offset.y < 0 {
+            let currentVelocity = scrollView.panGestureRecognizer.velocity(in: self.view)
+            let currentTouchPoint = scrollView.panGestureRecognizer.translation(in: view)
+            
+            if swipingToDismiss == nil { swipingToDismiss = (fabs(currentVelocity.x) > fabs(currentVelocity.y)) ? .horizontal : .vertical }
+            guard let swipingToDismissInProgress = swipingToDismiss else { return }
+            
+            switch scrollView.panGestureRecognizer.state {
+                
+            case .began:
+                swipeToDismissTransition = GallerySwipeToDismissTransition(scrollView: self.scrollView)
+                
+            case .changed:
+                self.handleSwipeToDismissInProgress(swipingToDismissInProgress, forTouchPoint: currentTouchPoint)
+                
+            case .ended:
+                self.handleSwipeToDismissEnded(swipingToDismissInProgress, finalVelocity: currentVelocity, finalTouchPoint: currentTouchPoint)
+                
+            default:
+                break
+            }
+        }
+    }
+    
     @objc func scrollViewDidSingleTap() {
 
         self.delegate?.itemControllerDidSingleTap(self)
@@ -295,39 +321,39 @@ open class ItemBaseController<T: UIView>: UIViewController, ItemController, UIGe
                 })
         }
     }
-
+    
     @objc func scrollViewDidSwipeToDismiss(_ recognizer: UIPanGestureRecognizer) {
-
+        
         /// A deliberate UX decision...you have to zoom back in to scale 1 to be able to swipe to dismiss. It is difficult for the user to swipe to dismiss from images larger then screen bounds because almost all the time it's not swiping to dismiss but instead panning a zoomed in picture on the canvas.
-        guard scrollView.zoomScale == scrollView.minimumZoomScale else { return }
-
+        guard scrollView.zoomScale == scrollView.minimumZoomScale else {return}
+        
         let currentVelocity = recognizer.velocity(in: self.view)
         let currentTouchPoint = recognizer.translation(in: view)
-
+        
         if swipingToDismiss == nil { swipingToDismiss = (fabs(currentVelocity.x) > fabs(currentVelocity.y)) ? .horizontal : .vertical }
         guard let swipingToDismissInProgress = swipingToDismiss else { return }
-
+        
         switch recognizer.state {
-
+            
         case .began:
             swipeToDismissTransition = GallerySwipeToDismissTransition(scrollView: self.scrollView)
-
+            
 
         case .changed:
             self.handleSwipeToDismissInProgress(swipingToDismissInProgress, forTouchPoint: currentTouchPoint)
-
+            
         case .ended:
             self.handleSwipeToDismissEnded(swipingToDismissInProgress, finalVelocity: currentVelocity, finalTouchPoint: currentTouchPoint)
-
+            
         default:
             break
         }
     }
 
     // MARK: - Swipe To Dismiss
-
+    
     func handleSwipeToDismissInProgress(_ swipeOrientation: SwipeToDismiss, forTouchPoint touchPoint: CGPoint) {
-
+        
         switch (swipeOrientation, index) {
 
         case (.horizontal, 0) where self.itemCount != 1:
