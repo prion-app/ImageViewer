@@ -60,7 +60,7 @@ open class ItemBaseController<T: UIView>: UIViewController, ItemController, UIGe
     fileprivate var swipeToDismissTransition: GallerySwipeToDismissTransition?
 
     fileprivate var lastOffset: CGFloat = 0
-
+    
     // MARK: - Initializers
 
     public init(index: Int, itemCount: Int, fetchImageBlock: @escaping FetchImageBlock, configuration: GalleryConfiguration, isInitialController: Bool = false) {
@@ -647,5 +647,11 @@ open class ItemBaseController<T: UIView>: UIViewController, ItemController, UIGe
 
     public func closeDecorationViews(_ duration: TimeInterval) {
         // stub
+    }
+    
+    public func stopVideo() {
+        if let vc = self as? VideoViewController {
+            vc.player.pause()
+        }
     }
 }

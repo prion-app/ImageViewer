@@ -23,4 +23,6 @@ public protocol ItemController: class {
     func dismissItem(alongsideAnimation: () -> Void, completion: @escaping () -> Void)
 
     func closeDecorationViews(_ duration: TimeInterval)
+    
+    func stopVideo()
 }
