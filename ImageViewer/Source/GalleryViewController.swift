@@ -631,7 +631,7 @@ open class GalleryViewController: UIPageViewController, ItemControllerDelegate {
         }
     }
 
-    public func itemControllerWillDisappear(_ controller: ItemController) {
+    open func itemControllerWillDisappear(_ controller: ItemController) {
 
         if let _ = controller as? VideoViewController {
 
